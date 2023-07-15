@@ -2,48 +2,55 @@ import pygame
 from world import Grass
 import random
 from agent import Buffalo, Buffalo_Leader
-
-pygame.init()
+import matplotlib.pyplot as plt
 
 plotRealTime = True
-width = 600
-height = 600
-Nt = 500
-num_grass = 5
-num_buffalos = 0
+width = 50
+height = 50
+Nt = 1000
+num_grass = 10
+num_buffalos = 20
 
-random.seed(42)
 
-buffalos = [Buffalo(random.randint(0, width), random.randint(0, height)) for _ in range(num_buffalos)]
-grasses = [Grass(random.randint(0,width), random.randint(0, height), random.randint(0,10)) for _ in range(num_grass)]
+fig, ax = plt.subplots()
 
 screen = pygame.display.set_mode((width, height))
 leader = Buffalo_Leader(random.randint(0, width), random.randint(0, height))
-buffalos.append(leader)
 
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+buffalos = [Buffalo(random.randint(0, width), random.randint(0, height), leader) for _ in range(num_buffalos)]
+grasses = [Grass(random.randint(0, width), random.randint(0, height), random.randint(0,10)) for _ in range(num_grass)]
 
-    for time in range(Nt):
-        if plotRealTime or (time == Nt-1):
-            for grass in grasses:
-                grass.decide_volume()
-                grass.decide_capacity()
-                pygame.draw.circle(screen, grass.color, (grass.x, grass.y), 25)
+buffalos.insert(0, leader)
 
-            for buffalo in buffalos:
-                if isinstance(buffalo, Buffalo_Leader):
-                    buffalo.perform_action(grasses)
-                else:
-                    buffalo.perform_action(grasses, leader)
-
-                pygame.draw.circle(screen, buffalo.color, (buffalo.x, buffalo.y), 10)
-
-            pygame.display.update()
-
-        screen.fill((255, 255, 255))
-
-pygame.quit()
+for i in range(Nt):
+    
+    for grass in grasses:
+        grass.decide_volume()
+        grass.decide_capacity()
+    
+    for buffalo in buffalos:
+        buffalo.perform_action(grasses)
+        buffalo.move()
+     
+    x = [buffalo.x for buffalo in buffalos]
+    y = [buffalo.y for buffalo in buffalos]   
+    c = [buffalo.color for buffalo in buffalos]
+    
+    grass_x = [grass.x for grass in grasses]
+    grass_y = [grass.y for grass in grasses]
+    grass_c = [grass.color for grass in grasses]
+    grass_s = [grass.size for grass in grasses]
+       
+    if plotRealTime or (i == Nt-1):
+        plt.cla()
+        plt.scatter(x, y, s=50, c=c)
+        plt.scatter(grass_x, grass_y, s=100, c=grass_c)
+        ax.set(xlim=(0,width),ylim=(0,height))
+        plt.pause(0.1)
+    
+    
+    chosen_buffalo = buffalos[-1]
+    print(chosen_buffalo.state)
+    print(chosen_buffalo.satisfaction)
+        
+plt.show()
