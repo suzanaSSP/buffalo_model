@@ -4,46 +4,45 @@ import random
 
 class Buffalo:
     dt = 0.1
+    
     def __init__(self, x, y, leader=None):
         self.x = x
         self.y = y
         self.c = np.array([self.x, self.y])
         # self.v = np.array([self.speed * math.cos(math.pi/2), self.speed*math.sin(math.pi/2)])
 
-        self.state = "follow_the_leader"
+        self.state = "hungry"
         self.change_x = 0
         self.change_y = 0
 
         self.grass_eating = None
-        self.satisfaction = 9
+        self.satisfaction = random.randint(80, 100)
         self.color = (0.4, 0.2, 0) # Brown (102, 51, 0)
 
-        self.repulsion_agents = []
-        self.orientation_agents = []
-        self.attractive_agents = []
-        
+       
         self.leader = self if leader is None else leader
 
     def check_state(self):
         if self.satisfaction < 10:
-            self.state = "hungry"
-        elif self.grass_eating and math.dist(self.c, self.grass_eating.c) < 5:
-            self.state = "eating"
+            if self.grass_eating and math.dist(self.c, self.grass_eating.c) < 5:
+                self.state = "eating"
+            else:
+                self.state = "hungry"
         else:
-            self.state = "follow_the_leader"
+            self.state = "wandering"
 
     def perform_action(self, grasses):   
         self.check_state()
         
-        if self.state == "follow_the_leader":
-            self.follow_the_leader()
+        if self.state == "wandering":
+            self.go_to_center()
         elif self.state == "hungry":
             self.find_food(grasses)
         elif self.state == "eating":
             self.eat()
         
     def move(self):
-        new_x = self.x + (self.change_x * self.dt)
+        new_x = self.x + (self.change_x * self.dt) 
         new_y = self.y + (self.change_y * self.dt)
 
         self.x = new_x
@@ -89,9 +88,10 @@ class Buffalo:
             self.grass_eating.agents_feeding.remove(self)
             self.grass_eating = None
 
-    def follow_the_leader(self):
-        self.change_x = self.leader.x - self.x
-        self.change_y = self.leader.y - self.y
+    def go_to_center(self):
+        new_location = [random.randint(20, 40), random.randint(20, 40)]
+        self.change_x = new_location[0] - self.x
+        self.change_y = new_location[1] - self.y 
         
         self.satisfaction -= 1
 
@@ -105,29 +105,28 @@ class Buffalo_Leader(Buffalo):
     def __init__(self, x, y, leader=None):
         super().__init__(x, y)
 
-    def check_grass(self, grasses):
-        grass_list = grasses
-        for grass in grass_list:
-            if math.dist(self.c, grass.c) <= self.radius:
-                grass_list.remove(grass)
+    # def check_grass(self, grasses):
+    #     # grass_list = grasses
+    #     # for grass in grass_list:
+    #     #     if math.dist(self.c, grass.c) <= 5:
+    #     #         grass_list.remove(grass)
                 
-        chosen_grass = grass_list[0]
-        self.change_x = chosen_grass.x - self.x
-        self.change_y = chosen_grass.y - self.y
-        
-        self.satisfaction -= 1
+    #     # chosen_grass = grass_list[0]
+    #     self.change_x = chosen_grass.x - self.x
+   
+    #     self.satisfaction -= 1
     
             
         
-    def perform_action(self, grasses):
-        self.check_state()
+    # def perform_action(self, grasses):
+    #     self.check_state()
         
-        if self.state == "follow_the_leader":
-            self.check_grass(grasses)
-        elif self.state == "hungry":
-            self.find_food(grasses)
-        else:
-            self.eat()
+    #     if self.state == "follow_the_leader":
+    #         self.check_grass(grasses)
+    #     elif self.state == "hungry":
+    #         self.find_food(grasses)
+    #     else:
+    #         self.eat()
 
 
 

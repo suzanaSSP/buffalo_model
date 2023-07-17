@@ -8,7 +8,7 @@ plotRealTime = True
 width = 50
 height = 50
 Nt = 1000
-num_grass = 2
+num_grass = 30
 num_buffalos = 20
 
 fig, ax = plt.subplots()
@@ -24,6 +24,8 @@ for i in range(Nt):
     for grass in grasses:
         grass.decide_volume()
         grass.decide_capacity()
+        if grass.full_capacity:
+            grasses.remove(grass)
     
     for buffalo in buffalos:
         buffalo.perform_action(grasses)
@@ -40,8 +42,8 @@ for i in range(Nt):
        
     if plotRealTime or (i == Nt-1):
         plt.cla()
-        plt.scatter(x, y, s=50, c=c)
         plt.scatter(grass_x, grass_y, s=grass_s, c=grass_c)
+        plt.scatter(x, y, s=50, c=c)
         ax.set(xlim=(0,width),ylim=(0,height))
         plt.pause(0.1)
     
