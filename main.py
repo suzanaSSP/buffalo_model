@@ -8,7 +8,7 @@ plotRealTime = True
 width = 50
 height = 50
 Nt = 1000
-num_grass = 30
+num_grass = 5
 num_buffalos = 20
 
 fig, ax = plt.subplots()
@@ -22,10 +22,7 @@ buffalos.insert(0, leader)
 for i in range(Nt):
     
     for grass in grasses:
-        grass.decide_volume()
-        grass.decide_capacity()
-        if grass.full_capacity:
-            grasses.remove(grass)
+        grass.perform_action()
     
     for buffalo in buffalos:
         buffalo.perform_action(grasses)
@@ -48,11 +45,8 @@ for i in range(Nt):
         plt.pause(0.1)
     
     
-    chosen_buffalo = buffalos[1]
-    print(chosen_buffalo.state)
-    print(chosen_buffalo.satisfaction)
-    if chosen_buffalo.grass_eating:
-        print(math.dist(chosen_buffalo.c, chosen_buffalo.grass_eating.c))
+    chosen_grass = grasses[0]
+    print(chosen_grass.grass_amount)
 
         
 plt.show()

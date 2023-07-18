@@ -2,6 +2,15 @@ import math
 import numpy as np
 import random
 
+"""
+Explanation of the self.switch: 
+Before, I had an if statement that says if the level of hunger is less than 10, go to the eating state. 
+While the agent is in the eating state, it gains 1 satisfaction every timestep.
+However, they are suppost to keep eating until they reach 100, but only they hit 10, they go to another state. 
+When they go to another state, it substracts one from satisfaction and goes back to the eating state, and it just goes back and from from the eating state and the other
+So now, they just go to the eating state if the switch is True, and the switch only changes when it's back at hundred
+"""
+
 class Buffalo:
     dt = 0.1
     
@@ -18,16 +27,16 @@ class Buffalo:
         self.grass_eating = None
         self.satisfaction = random.randint(80, 100)
         self.color = (0.4, 0.2, 0) # Brown (102, 51, 0)
+        
+        self.switch = False 
 
-       
         self.leader = self if leader is None else leader
 
     def check_state(self):
-        if self.satisfaction < 10:
-            if self.grass_eating and math.dist(self.c, self.grass_eating.c) < 5:
-                self.state = "eating"
-            else:
-                self.state = "hungry"
+        if self.switch:
+            self.state = "eating"
+        elif self.grass_eating or self.satisfaction < 40:
+            self.state = "hungry"
         else:
             self.state = "wandering"
 
@@ -69,6 +78,9 @@ class Buffalo:
             
         self.satisfaction -= 1
         
+        if math.dist(self.c, self.grass_eating.c) < 1:
+            self.switch = True
+        
     def closest_grass(self, grasses):
         # Find closest grass to eat
         closest_grass = grasses[0]
@@ -84,9 +96,10 @@ class Buffalo:
               
         self.satisfaction += 1
         
-        if self.satisfaction >= 90 and self.grass_eating:
+        if self.satisfaction == 100 and self.grass_eating:
             self.grass_eating.agents_feeding.remove(self)
             self.grass_eating = None
+            self.switch = False
 
     def go_to_center(self):
         new_location = [random.randint(20, 40), random.randint(20, 40)]
