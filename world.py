@@ -12,17 +12,15 @@ class Grass():
         self.size = 100
         self.grass_amount = 50
         self.agents_feeding = []
-        self.full_capacity = False
+        self.full_capacity = False if (self.volume*2) >= len(self.agents_feeding) else True
         
         self.switch = True # True = yes you can eat the grass. False = no there's no grass
 
     def perform_action(self):
         # Action grass should do every timestep
         self.decide_volume()
-        self.decide_capacity()
         self.eat_and_grow()
-            
-            
+               
     def decide_volume(self):
         if self.volume == 0:
             self.color = (1, 1, 1)
@@ -34,19 +32,6 @@ class Grass():
         else:
             self.size = 300
             self.color = (0.14, 0.54, 0.14) # Forest Green
-
-    def decide_capacity(self):
-        if self.volume <= 3:
-            if len(self.agents_feeding) > 6:
-                self.full_capacity = True
-        
-        if 3 < self.volume <= 7:
-            if len(self.agents_feeding) > 14:
-                self.full_capacity = True
-
-        if self.volume > 7:
-            if len(self.agents_feeding) > 20:
-                self.full_capacity = True
                 
     def eat_and_grow(self):
         for buffalo in self.agents_feeding:

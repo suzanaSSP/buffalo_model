@@ -50,13 +50,6 @@ def main():
             plt.scatter(x, y, s=s, c=c)
             ax.set(xlim=(0,L),ylim=(0,L))
             plt.pause(0.1)
-        
-        
-        chosen_grass = grasses[0]
-        chosen_buffalo = buffalos[0]
-        print(chosen_buffalo.state)
-        print(chosen_buffalo.clock)
-
             
     plt.show()
 

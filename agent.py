@@ -22,7 +22,7 @@ class Buffalo:
         self.theta  = np.random.uniform(-np.pi, np.pi) 
         self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
 
-        self.state = "grouping"
+        self.state = "run_away_from_predator"
         self.change_x = 0
         self.change_y = 0
         self.change_theta = 0
@@ -47,7 +47,7 @@ class Buffalo:
             self.state = "grouping"
 
     def perform_action(self, grasses, predator):   
-        self.check_state(predator)
+        # self.check_state(predator)
         
         if self.state == "grouping":
             self.grounping()
@@ -125,11 +125,13 @@ class Buffalo:
         self.satisfaction -= 1
 
     def avoid_predator(self, predator):
-        # repulsion_factor = -1 * ((predator.c - self.c)/ np.linalg.norm(predator.c - self.c)**2)
-        self.change_x = self.x - predator.x
-        self.change_y = self.y - predator.y
-
-
+        Ur = -1 * ((predator.c - self.c)/ np.linalg.norm(predator.c - self.c)**2)
+        w = 0.5 * (np.arctan2(Ur[1], Ur[0]) - self.theta) 
+        self.change_x = (self.speed * self.v)
+        self.change_y = (self.speed * self.v)
+        self.theta = self.theta + (self.dt * w)
+        self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
+ 
 class Predator(Buffalo):
     def __init__(self, x, y, size_area, leader=None):
         super().__init__(x, y, size_area)
@@ -164,13 +166,15 @@ class Predator(Buffalo):
         #     self.change_x = self.x + self.speed*self.clock
         #     self.change_y = self.y + self.speed*self.clock
         # else:
-        if not math.isnan(attraction_factor):
-            Ua = attraction_factor / np.linalg.norm(attraction_factor)       
-            w = 0.5 * (np.arctan2(Ua[1], Ua[0]) - self.theta)
+      
+        Ua = attraction_factor / np.linalg.norm(attraction_factor)  
 
-            self.change_x = (self.speed * self.v)
-            self.theta = self.theta + (self.dt * w)
-            self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
+            # w = 0.5 * (np.arctan2(Ua[1], Ua[0]) - self.theta)
+
+            # self.change_x = (self.speed * self.v) # This is only a part of this whole equation -> c = c+(s*v*dt)
+            # self.change_y = (self.speed * self.v)
+            # self.theta = self.theta + (self.dt * w)
+            # self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
  
         self.clock += 1
 
