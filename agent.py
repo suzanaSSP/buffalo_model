@@ -10,11 +10,12 @@ However, they are suppost to keep eating until they reach 100, but only they hit
 When they go to another state, it substracts one from satisfaction and goes back to the eating state, and it just goes back and from from the eating state and the other
 So now, they just go to the eating state if the switch is True, and the switch only changes when it's back at hundred
 """
+dt = 0.5
+speed = 5
 
 class Buffalo:
-    dt = 0.1
-    speed = 5
-    def __init__(self, x, y, size_area):
+    
+    def __init__(self, x, y, leader=None, predator=None):
         self.x = x
         self.y = y
         self.c = np.array([self.x, self.y])
@@ -22,7 +23,7 @@ class Buffalo:
         self.theta  = np.random.uniform(-np.pi, np.pi) 
         self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
 
-        self.state = "run_away_from_predator"
+        self.state = None
         self.change_x = 0
         self.change_y = 0
         self.change_theta = 0
@@ -32,25 +33,47 @@ class Buffalo:
         self.color = (0.4, 0.2, 0) # Brown (102, 51, 0)
         
         self.switch = False 
-
-        self.size_area = size_area
-        self.size = 50
-
-    def check_state(self, predator):
-        if math.dist(predator.c, self.c) < 100:
-            self.state = "run_away_from_predator"
-        elif self.switch:
+        self.leader =  self if leader is None else leader
+        self.neighbors = []
+        
+        self.predator = None if predator is None else predator
+       
+    def attraction(self, Ua):
+        w = 0.5 * (np.arctan2(Ua[1], Ua[0]) - self.theta)
+        new_theta = self.theta + (w * dt)
+        new_v = np.array([np.cos(new_theta), np.sin(new_theta)])
+        new_c = self.c + (speed * self.v * dt)
+        
+        self.move(new_c, new_v, new_theta)
+        
+    def move(self, new_c, new_v, new_theta):
+        self.c = new_c
+        self.x = new_c[0]
+        self.y = new_c[1]
+        self.v = new_v
+        self.theta = new_theta
+        
+        self.satisfaction -= 1
+    
+    def check_state(self, buffalos):
+        neighbors = [other_agent for other_agent in buffalos if math.dist(other_agent.c, self.c) < 1000 and not self]
+        
+        for agent in neighbors:
+            if isinstance(agent, Predator):
+                self.state = "run_away_from_predator"        
+                
+        if self.switch:
             self.state = "eating"
         elif self.grass_eating or self.satisfaction < 40:
             self.state = "hungry"
         else:
             self.state = "grouping"
 
-    def perform_action(self, grasses, predator):   
-        # self.check_state(predator)
+    def perform_action(self, grasses, buffalos, predator):   
+        self.check_state(buffalos)
         
         if self.state == "grouping":
-            self.grounping()
+            self.grouping()
         elif self.state == "hungry":
             self.find_food(grasses)
         elif self.state == "eating":
@@ -58,36 +81,25 @@ class Buffalo:
         elif self.state == "run_away_from_predator":
             self.avoid_predator(predator)
         
-    def move(self):
-        new_x = self.x + (self.change_x * self.dt) 
-        new_y = self.y + (self.change_y * self.dt)
-
-        self.x = new_x
-        self.y = new_y
-        self.c = np.array([self.x, self.y])
-        
-        self.change_x = 0
-        self.change_y = 0
-
+    # HUNGRY STATE
     def find_food(self, grasses):
         # list of potential grasses buffalo can eat
-        attractive_grasses = []   
+        good_grass = []   
         for grass in grasses:
             if not grass.full_capacity:
-                attractive_grasses.append(grass)
+                good_grass.append(grass)
                 
-        if not attractive_grasses:
+        if not good_grass:
             return None
         else:
             # Chose the closet grass with less buffalos to eat 
-            self.grass_eating = self.closest_grass(attractive_grasses)
-            self.change_x = self.grass_eating.x - self.x
-            self.change_y = self.grass_eating.y - self.y
+            self.grass_eating = self.closest_grass(good_grass)
             
-        self.satisfaction -= 1
-        
-        if math.dist(self.c, self.grass_eating.c) < 1:
+        if math.dist(self.grass_eating.c, self.c) < 1:
             self.switch = True
+            
+        Ua = (self.grass_eating.c - self.c) / np.linalg.norm(self.grass_eating.c - self.c)
+        self.attraction(Ua)
         
     def closest_grass(self, grasses):
         # Find closest grass to eat
@@ -98,6 +110,7 @@ class Buffalo:
 
         return closest_grass
 
+    # EATING STATE
     def eat(self):
         if self.grass_eating:
             if self not in self.grass_eating.agents_feeding:
@@ -117,73 +130,78 @@ class Buffalo:
         else:    
             self.switch = False
 
-    def grounping(self):
-        new_location = [random.randint(0, self.size_area//4), random.randint(0, self.size_area//4)]
-        self.change_x = new_location[0] - self.x
-        self.change_y = new_location[1] - self.y 
-        
-        self.satisfaction -= 1
-
+    # GROUPING STATE
+    def grouping(self):
+        attraction_factor = 0
+        for agent in self.neighbors:
+            if isinstance(agent, BuffaloLeader):
+                attraction_factor += ((agent.c - self.c) * 2) # more weight if it's a leader
+            else:
+                attraction_factor += (agent.c - self.c)
+                
+        if not self.neighbors:
+            attraction_factor += ((self.leader.c - self.c) * 2)
+            
+        Ua = attraction_factor / np.linalg.norm(attraction_factor)
+        self.attraction(Ua)
+      
+    # RUN_AWAY_FROM_PREDATOR STATE  
     def avoid_predator(self, predator):
         Ur = -1 * ((predator.c - self.c)/ np.linalg.norm(predator.c - self.c)**2)
-        w = 0.5 * (np.arctan2(Ur[1], Ur[0]) - self.theta) 
-        self.change_x = (self.speed * self.v)
-        self.change_y = (self.speed * self.v)
-        self.theta = self.theta + (self.dt * w)
-        self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
+        self.attraction(Ur)
+        
+class BuffaloLeader(Buffalo):
+    def __init__(self, x, y, leader=None):
+        super().__init__(x, y)
+        self.color = (0.6, 0, 0) # Dark red
+        self.clock = 0 
+        
+    def grouping(self):
+        new_theta = np.random.uniform(-(np.pi)/4, np.pi/4)
+        new_v = np.array([np.cos(new_theta), np.sin(new_theta)])
+        new_c = self.c + (speed * new_v * dt)
+        
+        self.move(new_c, new_v, new_theta)
  
 class Predator(Buffalo):
-    def __init__(self, x, y, size_area, leader=None):
-        super().__init__(x, y, size_area)
-        self.clock = 0
-        self.state = "chase_buffalo"
+    def __init__(self, x, y, leader=None):
+        super().__init__(x, y)
         self.color = (1, 0.5, 0) # Orange
-        self.size = 100
-
-    def check_state(self):
-        if self.clock > 20:
-            self.state = "chase_buffalo"
-        else:
-            self.state = "wait"
 
     def perform_action(self, buffalos):
-        # self.check_state()
-
-        if self.state == "chase_buffalo":
-            self.chase_buffalo(buffalos)
+        # Only bufalos that are in the predators radius of hunt are added in this list
+        self.neighbors = [buffalo for buffalo in buffalos if math.dist(buffalo.c, self.c) < 10 and not self]
+        # If the list is not empty, you can hunt :)
+        if self.neighbors:
+            self.chase_buffalo(self.neighbors)
         else:
-            self.clock += 1
+            self.random_walk(buffalos)
 
+    # CHASE_BUFFALO STATE
     def chase_buffalo(self, buffalos):
         attraction_factor = 0
 
-        for buffalo in buffalos[1:]:
-            if math.dist(buffalo.c, self.c) < 500:
-                attraction_factor += (buffalo.c - self.c)
-        
-        # # No buffalos are near, need to move forward
-        # if all(attraction_factor) == 0:
-        #     self.change_x = self.x + self.speed*self.clock
-        #     self.change_y = self.y + self.speed*self.clock
-        # else:
-      
+        for buffalo in self.neighbors:
+            attraction_factor += (buffalo.c - self.c)
+           
         Ua = attraction_factor / np.linalg.norm(attraction_factor)  
+        self.attraction(Ua)
+       
+    # WAITING STATE     
+    def random_walk(self, buffalos):
+        # new_theta = np.random.uniform(-(np.pi)/4, np.pi/4)
+        # new_v = np.array([np.cos(new_theta), np.sin(new_theta)])
+        # new_c = self.c + (speed * new_v * dt)
+        
+        # self.move(new_c, new_v, new_theta)
 
-            # w = 0.5 * (np.arctan2(Ua[1], Ua[0]) - self.theta)
-
-            # self.change_x = (self.speed * self.v) # This is only a part of this whole equation -> c = c+(s*v*dt)
-            # self.change_y = (self.speed * self.v)
-            # self.theta = self.theta + (self.dt * w)
-            # self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
- 
-        self.clock += 1
-
-        # Time is up, change states
-        if self.clock == 150:
-            self.clock = 0
-            self.c = [0,0]
-
-
+        attraction_factor = 0
+        for buffalo in buffalos:
+            attraction_factor += (buffalo.c - self.c)
+            
+        Ua = attraction_factor / np.linalg.norm(attraction_factor)
+        
+        self.attraction(Ua)
         
 
 
