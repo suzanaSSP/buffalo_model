@@ -28,7 +28,7 @@ def main():
         
         for buffalo in buffalos:
             buffalo.perform_action(grasses)
-            buffalo.move()
+            buffalo.update()
         
         x = [buffalo.x for buffalo in buffalos]
         y = [buffalo.y for buffalo in buffalos]   

@@ -6,8 +6,8 @@ import math
 
 plotRealTime = True
 L = 1000
-min_value = 250
-max_value = 750
+min_value = 200
+max_value = 700
 Nt = 1000
 num_grass = 5
 num_buffalos = 10
@@ -33,7 +33,7 @@ for i in range(Nt):
         if isinstance(buffalo, Predator):
             buffalo.perform_action(buffalos)
         else:
-            buffalo.perform_action(grasses, buffalos, predator)
+            buffalo.perform_action(grasses, buffalos)
     
     x = [buffalo.x % L for buffalo in buffalos]
     y = [buffalo.y % L for buffalo in buffalos]   
@@ -47,14 +47,12 @@ for i in range(Nt):
     if plotRealTime or (i == Nt-1):
         plt.cla()
         plt.scatter(grass_x, grass_y, s=grass_s, c=grass_c)
-        plt.scatter(x, y, s=50, c=c)
+        plt.scatter(x, y, s=100, c=c)
         ax.set(xlim=(0,L),ylim=(0,L))
         plt.pause(0.1)
-        
-    chosen_buffalo = buffalos[0]
-    print(chosen_buffalo.state)
-    print(chosen_buffalo.satisfaction)
+    
         
 plt.show()
 
 
+ 
