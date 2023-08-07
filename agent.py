@@ -2,14 +2,6 @@ import math
 import numpy as np
 import random
 
-"""
-Explanation of the self.switch: 
-Before, I had an if statement that says if the level of hunger is less than 10, go to the eating state. 
-While the agent is in the eating state, it gains 1 satisfaction every timestep.
-However, they are suppost to keep eating until they reach 100, but only they hit 10, they go to another state. 
-When they go to another state, it substracts one from satisfaction and goes back to the eating state, and it just goes back and from from the eating state and the other
-So now, they just go to the eating state if the switch is True, and the switch only changes when it's back at hundred
-"""
 dt = 0.5
 
 class Buffalo:
@@ -31,21 +23,24 @@ class Buffalo:
         self.switch = False 
         self.leader =  self if leader is None else leader
         self.predator = None if predator is None else predator
+
+        self.new_theta = 0
+        self.new_v = None
+        self.new_c = None
        
     def movement(self, U):
         w = 0.5 * (np.arctan2(U[1], U[0]) - self.theta)
-        new_theta = self.theta + (w * dt)
-        new_v = np.array([np.cos(new_theta), np.sin(new_theta)])
-        new_c = self.c + (self.speed * self.v * dt)
+        self.new_theta = self.theta + (w * dt)
+        self.new_v = np.array([np.cos(self.new_theta), np.sin(self.new_theta)])
+        self.new_c = self.c + (self.speed * self.v * dt)
+    
         
-        self.update(new_c, new_v, new_theta)
-        
-    def update(self, new_c, new_v, new_theta):
-        self.c = new_c
-        self.x = new_c[0]
-        self.y = new_c[1]
-        self.v = new_v
-        self.theta = new_theta
+    def update(self):
+        self.c = self.new_c
+        self.x = self.new_c[0]
+        self.y = self.new_c[1]
+        self.v = self.new_v
+        self.theta = self.new_theta
         
         self.satisfaction -= 1
     
@@ -139,24 +134,10 @@ class Buffalo:
       
     # RUN_AWAY_FROM_PREDATOR STATE  
     def avoid_predator(self):
-        attraction_factor = 0
-        orientation_factor = np.array([0.0, 0.0])
-        for agent in self.neighbors:
-            if isinstance(agent, BuffaloLeader):
-                attraction_factor += ((agent.c - self.c) * 2) # more weight if it's a leader
-            else:
-                attraction_factor += (agent.c - self.c)
-            orientation_factor += agent.v
-        if not self.neighbors:
-            attraction_factor += ((self.leader.c - self.c) * 2)
-            orientation_factor += self.leader.v
-            
-        Uo = (self.v + orientation_factor)/np.linalg.norm(self.v + orientation_factor)
-        Ua = attraction_factor / np.linalg.norm(attraction_factor)
-        Ur = (-1 * ((self.predator.c - self.c)/ np.linalg.norm(self.predator.c - self.c)**2)) 
         
-        U = Ur + Ua + Uo
-        self.movement(U)
+        Ur = (-1 * ((self.predator.c - self.c)/ np.linalg.norm(self.predator.c - self.c)**2)) * 5
+
+        self.movement(Ur)
         
 class BuffaloLeader(Buffalo):
     def __init__(self, x, y, leader=None):
@@ -165,11 +146,10 @@ class BuffaloLeader(Buffalo):
         self.neighbor_dist = None
         
     def grouping(self):
-        new_theta = np.random.uniform(-(np.pi)/4, np.pi/4)
-        new_v = np.array([np.cos(new_theta), np.sin(new_theta)])
-        new_c = self.c + (self.speed * new_v * dt)
+        self.new_theta = np.random.uniform(-(np.pi)/4, np.pi/4)
+        self.new_v = np.array([np.cos(self.new_theta), np.sin(self.new_theta)])
+        self.new_c = self.c + (self.speed * self.new_v * dt)
         
-        self.update(new_c, new_v, new_theta)
  
 class Predator(Buffalo):
     def __init__(self, x, y, leader=None):
@@ -197,7 +177,7 @@ class Predator(Buffalo):
         attraction_factor = 0
 
         for buffalo in self.neighbors:
-            if math.dist(buffalo.c, self.c) < 10:
+            if math.dist(buffalo.c, self.c) < 50:
                 self.satisfaction = 200
                 # buffalo.color = (0.5, 0.5, 0.5)
                 buffalos.remove(buffalo)
@@ -209,11 +189,11 @@ class Predator(Buffalo):
         
     # EXPLORING STATE
     def random_walk(self):
-        new_theta = np.random.uniform(-(np.pi)/4, np.pi/2)
-        new_v = np.array([np.cos(new_theta), np.sin(new_theta)])
-        new_c = self.c + (self.speed * new_v * dt)
+        self.new_theta = np.random.uniform(-(np.pi)/4, np.pi/2)
+        self.new_v = np.array([np.cos(self.new_theta), np.sin(self.new_theta)])
+        self.new_c = self.c + (self.speed * self.new_v * dt)
         
-        self.update(new_c, new_v, new_theta) 
+
         
         
 

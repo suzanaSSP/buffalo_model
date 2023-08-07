@@ -9,7 +9,7 @@ class Grass():
         self.volume = volume
         self.color = (0,0.5,0)
 
-        self.size = 100
+        self.size = 200
         self.grass_amount = 50
         self.agents_feeding = []
         self.full_capacity = False if (self.volume*2) >= len(self.agents_feeding) else True
@@ -27,10 +27,10 @@ class Grass():
         elif 0 < self.volume <= 3:
             self.color = (0.7, 0.8, 0.7) # Celadon
         elif 3 < self.volume <= 7:
-            self.size = 200
+            self.size = 300
             self.color = (0.3, 0.78, 0.47) # Esmerald Green
         else:
-            self.size = 300
+            self.size = 400
             self.color = (0.14, 0.54, 0.14) # Forest Green
                 
     def eat_and_grow(self):

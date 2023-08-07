@@ -1,0 +1,11 @@
+# Create neighbors for each buffalos according to a radius. Do same things for predator
+# Constant speed, change the predator's theta define range (upper bound)
+
+"""
+Explanation of the self.switch: 
+Before, I had an if statement that says if the level of hunger is less than 10, go to the eating state. 
+While the agent is in the eating state, it gains 1 satisfaction every timestep.
+However, they are suppost to keep eating until they reach 100, but only they hit 10, they go to another state. 
+When they go to another state, it substracts one from satisfaction and goes back to the eating state, and it just goes back and from from the eating state and the other
+So now, they just go to the eating state if the switch is True, and the switch only changes when it's back at hundred
+"""
