@@ -13,9 +13,9 @@ class Buffalo:
 
         self.theta  = np.random.uniform(-np.pi, np.pi) 
         self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
-        self.speed = 5
+        self.speed = 7 if self.state == "run_away_from_predator" else 5
 
-        self.state = None
+        self.state = "grouping"
         self.grass_eating = None
         self.satisfaction = random.randint(150, 200)
         self.color = (0.4, 0.2, 0) # Brown (102, 51, 0)
@@ -134,7 +134,6 @@ class Buffalo:
       
     # RUN_AWAY_FROM_PREDATOR STATE  
     def avoid_predator(self):
-        
         Ur = (-1 * ((self.predator.c - self.c)/ np.linalg.norm(self.predator.c - self.c)**2)) * 5
 
         self.movement(Ur)
@@ -152,10 +151,10 @@ class BuffaloLeader(Buffalo):
         
  
 class Predator(Buffalo):
-    def __init__(self, x, y, leader=None):
-        super().__init__(x, y)
+    def __init__(self, x, y, leader=None, predator=None):
+        super().__init__(x, y, leader=None, predator=None)
         self.color = (1, 0.5, 0) # Orange
-        self.speed = 10
+        self.speed = 5
 
     def perform_action(self, buffalos):
         # Only bufalos that are in the predators radius of hunt are added in this list

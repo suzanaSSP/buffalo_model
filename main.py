@@ -9,8 +9,8 @@ L = 1000
 min_value = 200
 max_value = 700
 Nt = 1000
-num_grass = 5
-num_buffalos = 10
+num_grass = 10
+num_buffalos = 20
 
 predator = Predator(random.randint(min_value, max_value), random.randint(min_value, max_value))
 buffalo_leader = BuffaloLeader(random.randint(min_value, max_value), random.randint(min_value, max_value))
@@ -54,15 +54,13 @@ def main_simulation(buffalos, grasses):
 
         if plotRealTime or (i == Nt-1):
             plt.cla()
-            ax.add_artist(radius_circle)
+            # ax.add_artist(radius_circle)
             plt.scatter(grass_x, grass_y, s=grass_s, c=grass_c)
             plt.scatter(x, y, s=100, c=c)    
             ax.set(xlim=(0,L),ylim=(0,L))
             plt.pause(0.1)
 
-        chosen_agent = buffalos[-1]
-        print(chosen_agent.state)
-        print(min(chosen_agent.neighbor_dist))
+        
           
     plt.show()
 
