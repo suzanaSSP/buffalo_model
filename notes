@@ -9,3 +9,16 @@ However, they are suppost to keep eating until they reach 100, but only they hit
 When they go to another state, it substracts one from satisfaction and goes back to the eating state, and it just goes back and from from the eating state and the other
 So now, they just go to the eating state if the switch is True, and the switch only changes when it's back at hundred
 """
+
+# Predator states:
+# Find_hiding_place -> hide -> chase_buffalo |
+#         |__________________________________|
+
+"""
+Ideas:
+- Have buffalos attack predators if there are a lot of buffalos
+- That will balance out predator attacks on buffalos
+"""
+
+#Problems:
+#Everyone is dying :)
