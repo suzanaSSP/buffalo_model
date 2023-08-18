@@ -9,13 +9,13 @@ L = 1000
 min_value = 200
 max_value = 700
 Nt = 1000
-num_grass = 10
-num_buffalos = 20
+num_grass = 30
+num_buffalos = 30
 
 predator = Predator(random.randint(min_value, max_value), random.randint(min_value, max_value))
 buffalo_leader = BuffaloLeader(random.randint(min_value, max_value), random.randint(min_value, max_value))
 buffalos = [Buffalo(random.randint(min_value, max_value), random.randint(min_value, max_value), buffalo_leader, predator) for _ in range(num_buffalos)]
-grasses = [Grass(random.randint(L//4, L), random.randint(L//4, L), random.randint(0,10)) for _ in range(num_grass)]
+grasses = [Grass(random.randint(0, L), random.randint(0, L), random.randint(0,10)) for _ in range(num_grass)]
 
 buffalos.append(buffalo_leader)
 buffalos.append(predator)
@@ -67,10 +67,11 @@ def main_simulation(buffalos, grasses):
             plt.scatter(x, y, s=100, c=c)    
             ax.set(xlim=(0,L),ylim=(0,L))
             plt.pause(0.1)
-
-            chosen_buffalo = buffalos[0]
-            print(chosen_buffalo.state)
-            print(chosen_buffalo.satisfaction)
+            
+            chosen_grass = grasses[9]
+            print(chosen_grass.volume)
+            if not chosen_grass.switch:
+                print(chosen_grass.switch)
    
     plt.show()
 

@@ -15,10 +15,10 @@ class Buffalo:
 
         self.theta  = np.random.uniform(-np.pi, np.pi) 
         self.v = np.array([np.cos(self.theta), np.sin(self.theta)])
-        self.speed = 7 if self.state == 'run_away_from_predator' else 5 
+        self.speed = 10 if self.state == 'run_away_from_predator' else 5 
 
         self.grass_eating = None
-        self.satisfaction = random.randint(180, 200) 
+        self.satisfaction = 200
         self.color = (0.4, 0.2, 0) # Brown (102, 51, 0)
         self.switch = False 
         
@@ -30,7 +30,7 @@ class Buffalo:
         self.new_v = np.array([0,0])
         self.new_c = np.array([0,0])
        
-    def movement(self, U):
+    def new_position(self, U):
         w = 0.5 * (np.arctan2(U[1], U[0]) - self.theta)
         self.new_theta = self.theta + (w * dt)
         self.new_v = np.array([np.cos(self.new_theta), np.sin(self.new_theta)])
@@ -49,8 +49,9 @@ class Buffalo:
     
     def check_state(self, buffalos):
         self.neighbors = [other_buffalo for other_buffalo in buffalos if math.dist(other_buffalo.c, self.c) <= 200 and other_buffalo is not self]
+        self.neighbors_speed = [neighbor.speed for neighbor in self.neighbors]
         
-        if self.predator in self.neighbors:
+        if self.predator in self.neighbors or 10 in self.neighbors_speed:
             if len(self.neighbors) > 10 and math.dist(self.c, self.predator.c) < 100:
                 self.state == "attack_predator"
             else:
@@ -94,7 +95,7 @@ class Buffalo:
             self.switch = True
             
         Ua = (self.grass_eating.c - self.c) / np.linalg.norm(self.grass_eating.c - self.c)
-        self.movement(Ua)
+        self.new_position(Ua)
         
     def closest_grass(self, grasses):
         # Find closest grass to eat
@@ -128,23 +129,43 @@ class Buffalo:
     # GROUPING STATE
     def grouping(self):
         attraction_factor = 0
+        repulsion_factor = 0
+        orientation_factor = np.array([0,0], dtype='float64')
+        
         for agent in self.neighbors:
-            if isinstance(agent, BuffaloLeader):
-                attraction_factor += ((agent.c - self.c) * 2) # more weight if it's a leader
-            else:
-                attraction_factor += (agent.c - self.c)
-                
-        if not self.neighbors:
+            if agent.state != "eating":
+                orientation_factor += agent.v
+                repulsion_factor += (agent.c-self.c)/(np.linalg.norm(agent.c - self.c)**2)
+                if isinstance(agent, BuffaloLeader):
+                    attraction_factor += ((agent.c - self.c) * 2) # more weight if it's a leader
+                else:
+                    attraction_factor += (agent.c - self.c)
+                        
+        if attraction_factor == 0 and repulsion_factor == 0 and (orientation_factor == np.array([0, 0])).all():
             attraction_factor += ((self.leader.c - self.c) * 2)
-            
+            repulsion_factor += (self.leader.c-self.c)/(np.linalg.norm(self.leader.c - self.c)**2)
+            orientation_factor += self.leader.v
+           
+        Uo = (self.v + orientation_factor)/np.linalg.norm(self.v + orientation_factor)     
+        Ur = -1 * repulsion_factor
         Ua = attraction_factor / np.linalg.norm(attraction_factor)
-        self.movement(Ua)
+        U = Ua + Ur + Uo
+        self.new_position(U)
       
     # RUN_AWAY_FROM_PREDATOR STATE  
     def avoid_predator(self):
-        Ur = (-1 * ((self.predator.c - self.c)/ np.linalg.norm(self.predator.c - self.c)**2)) * 5
-
-        self.movement(Ur)
+        if self.neighbors:
+            orientation_factor = np.array([0,0], dtype='float64')
+            attraction_factor = 0
+            for agent in self.neighbors:
+                attraction_factor += (agent.c - self.c)
+                orientation_factor += agent.v
+        Uo = (self.v + orientation_factor)/np.linalg.norm(self.v + orientation_factor)
+        Ua = attraction_factor / np.linalg.norm(attraction_factor)
+        Ur = -1 * ((self.predator.c - self.c)/ np.linalg.norm(self.predator.c - self.c))
+        
+        U = Ua + Ur + Uo
+        self.new_position(U)
 
     # ATTACK_PREDATOR STATE
     def attack_predator(self, buffalos):
@@ -210,7 +231,7 @@ class Predator(Buffalo):
             repulsion_factor += (neighbor.c - self.c)/np.linalg.norm(neighbor.c - self.c)**2
 
         Ur = -1 * repulsion_factor
-        self.movement(Ur)
+        self.new_position(Ur)
     
     # CHASE_BUFFALO STATE
     def chase_buffalo(self, buffalos):
@@ -229,7 +250,7 @@ class Predator(Buffalo):
             self.satisfaction = self.buffalos_eaten * 100
 
             Ua = attraction_factor / np.linalg.norm(attraction_factor)
-            self.movement(Ua)
+            self.new_position(Ua)
             
     def go_closer_to_buffalos(self, buffalos):
         attraction_factor = 0
@@ -237,7 +258,7 @@ class Predator(Buffalo):
             attraction_factor += (buffalo.c - self.c)
 
         Ua = attraction_factor / np.linalg.norm(attraction_factor)
-        self.movement(Ua)
+        self.new_position(Ua)
 
     # EXPLORING STATE
     def random_walk(self):
